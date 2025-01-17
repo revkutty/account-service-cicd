@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  user-service-cicd:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./application.properties:/src/main/resources/application.properties
+    networks:
+      - app-network
+
+  account-service-cicd:
+    build:
+      context: ./account-service
+      dockerfile: Dockerfile
+    container_name: account-service
+    ports:
+      - "8082:8082"
+    environment:
+      - USER_SERVICE_URL=http://user-service:8080/api/user/
+    depends_on:
+      - user-service-cicd
+    volumes:
+        - ./application.properties:/src/main/resources/application.properties
+    networks:
+      - app-network
+
+  fund-transfer-service-cicd:
+    build:
+      context: ./fund-transfer-service
+      dockerfile: Dockerfile
+    container_name: fund-transfer-service
+    ports:
+      - "8083:8083"
+    environment:
+      - ACCOUNT_SERVICE_URL=http://account-service:8082/api/account/
+    depends_on:
+      - account-service-cicd
+    volumes:
+      - ./application.properties:/src/main/resources/application.properties
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
